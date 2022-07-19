@@ -1,181 +1,88 @@
-var svg = d3.select("svg"),
-    width = +svg.node().getBoundingClientRect().width,
-    height = +svg.node().getBoundingClientRect().height;
-
-// svg objects
-var link, node;
-// the data - an object with nodes and links
-var graph;
-
-// load the data
-d3.json("http://127.0.0.1:5500/miserables.json").then(function(_graph) {
-  graph = _graph;
-  initializeDisplay();
-  initializeSimulation();
-});
-
-//////////// FORCE SIMULATION //////////// 
-
-// force simulator
-var simulation = d3.forceSimulation();
-
-// set up the simulation and event to update locations after each tick
-function initializeSimulation() {
-  simulation.nodes(graph.nodes);
-  initializeForces();
-  simulation.on("tick", ticked);
-}
-
-// values for all forces
-forceProperties = {
-    center: {
-        x: 0.5,
-        y: 0.5
-    },
-    charge: {
-        enabled: true,
-        strength: -40,
-        distanceMin: 1,
-        distanceMax: 300
-    },
-    collide: {
-        enabled: true,
-        strength: .2,
-        iterations: 1,
-        radius: 7
-    },
-    forceX: {
-        enabled: false,
-        strength: .1,
-        x: .5
-    },
-    forceY: {
-        enabled: false,
-        strength: .1,
-        y: .5
-    },
-    link: {
-        enabled: true,
-        distance: 10,
-        iterations: 1
-    }
-}
-
-// add forces to the simulation
-function initializeForces() {
-    // add forces and associate each with a name
-    simulation
-        .force("link", d3.forceLink())
-        .force("charge", d3.forceManyBody())
-        .force("collide", d3.forceCollide())
-        .force("center", d3.forceCenter())
-        .force("forceX", d3.forceX())
-        .force("forceY", d3.forceY());
-    // apply properties to each of the forces
-    updateForces();
-}
-
-// apply new force properties
-function updateForces() {
-    // get each force by name and update the properties
-    simulation.force("center")
-        .x(width * forceProperties.center.x)
-        .y(height * forceProperties.center.y);
-    simulation.force("charge")
-        .strength(forceProperties.charge.strength * forceProperties.charge.enabled)
-        .distanceMin(forceProperties.charge.distanceMin)
-        .distanceMax(forceProperties.charge.distanceMax);
-    simulation.force("collide")
-        .strength(forceProperties.collide.strength * forceProperties.collide.enabled)
-        .radius(forceProperties.collide.radius)
-        .iterations(forceProperties.collide.iterations);
-    simulation.force("forceX")
-        .strength(forceProperties.forceX.strength * forceProperties.forceX.enabled)
-        .x(width * forceProperties.forceX.x);
-    simulation.force("forceY")
-        .strength(forceProperties.forceY.strength * forceProperties.forceY.enabled)
-        .y(height * forceProperties.forceY.y);
-    simulation.force("link")
-        .id(function(d) {return d.id;})
-        .distance(forceProperties.link.distance)
-        .iterations(forceProperties.link.iterations)
-        .links(forceProperties.link.enabled ? graph.links : []);
-
-    // updates ignored until this is run
-    // restarts the simulation (important if simulation has already slowed down)
-    simulation.alpha(1).restart();
-}
-
-//////////// DISPLAY ////////////
-
-// generate the svg objects and force simulation
-function initializeDisplay() {
-  // set the data and properties of link lines
-  link = svg.append("g")
-        .attr("class", "links")
-    .selectAll("line")
-    .data(graph.links)
-    .enter().append("line");
-
-  // set the data and properties of node circles
-  node = svg.append("g")
-        .attr("class", "nodes")
-    .selectAll("circle")
-    .data(graph.nodes)
-    .enter().append("circle")
-        .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
-
-  // node tooltip
-  node.append("title")
-      .text(function(d) { return d.id; });
-  // visualize the graph
-  updateDisplay();
-}
-
-// update the display based on the forces (but not positions)
-function updateDisplay() {
-    node
-        .attr("r", forceProperties.collide.radius)
-        .attr("stroke", forceProperties.charge.strength > 0 ? "blue" : "red")
-        .attr("stroke-width", forceProperties.charge.enabled==false ? 0 : Math.abs(forceProperties.charge.strength)/15);
-
-    link
-        .attr("stroke-width", forceProperties.link.enabled ? 1 : .5)
-        .attr("opacity", forceProperties.link.enabled ? 1 : 0);
-}
-
-// update the display positions after each simulation tick
-function ticked() {
-    link
-        .attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    node
-        .attr("cx", function(d) { return d.x; })
-        .attr("cy", function(d) { return d.y; });
-    d3.select('#alpha_value').style('flex-basis', (simulation.alpha()*100) + '%');
-}
-
-//////////// UI EVENTS ////////////
-
-function dragstarted(event, d) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-  }
-  
-  function dragged(event, d) {
-    d.fx = event.x;
-    d.fy = event.y;
-  }
-  
-  function dragended(event, d) {
-    if (!event.active) simulation.alphaTarget(0.0001);
-    d.fx = null;
-    d.fy = null;
-  }
+var data = {
+    nodes: [{
+      name: "A",
+      x: 200,
+      y: 150
+    }, {
+      name: "B",
+      x: 140,
+      y: 300
+    }, {
+      name: "C",
+      x: 300,
+      y: 300
+    }, {
+      name: "D",
+      x: 300,
+      y: 180
+    }],
+    links: [{
+      source: 0,
+      target: 1
+    }, {
+      source: 1,
+      target: 2
+    }, {
+      source: 2,
+      target: 3
+    }, ]
+  };
+ 
+  var c10 = d3.scale.category10();
+  var svg = d3.select("body")
+    .append("svg")
+    .attr("width", 1200)
+    .attr("height", 800);
+ 
+  var drag = d3.behavior.drag()
+    .on("drag", function(d, i) {
+      d.x += d3.event.dx
+      d.y += d3.event.dy
+      d3.select(this).attr("cx", d.x).attr("cy", d.y);
+      links.each(function(l, li) {
+        if (l.source == i) {
+          d3.select(this).attr("x1", d.x).attr("y1", d.y);
+        } else if (l.target == i) {
+          d3.select(this).attr("x2", d.x).attr("y2", d.y);
+        }
+      });
+    });
+ 
+  var links = svg.selectAll("link")
+    .data(data.links)
+    .enter()
+    .append("line")
+    .attr("class", "link")
+    .attr("x1", function(l) {
+      var sourceNode = data.nodes.filter(function(d, i) {
+        return i == l.source
+      })[0];
+      d3.select(this).attr("y1", sourceNode.y);
+      return sourceNode.x
+    })
+    .attr("x2", function(l) {
+      var targetNode = data.nodes.filter(function(d, i) {
+        return i == l.target
+      })[0];
+      d3.select(this).attr("y2", targetNode.y);
+      return targetNode.x
+    })
+    .attr("fill", "none")
+    .attr("stroke", "white");
+ 
+  var nodes = svg.selectAll("node")
+    .data(data.nodes)
+    .enter()
+    .append("circle")
+    .attr("class", "node")
+    .attr("cx", function(d) {
+      return d.x
+    })
+    .attr("cy", function(d) {
+      return d.y
+    })
+    .attr("r", 15)
+    .attr("fill", function(d, i) {
+      return c10(i);
+    })
+    .call(drag);
