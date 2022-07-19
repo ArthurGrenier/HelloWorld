@@ -1,17 +1,21 @@
 var data = {
     nodes: [{
+      id : 0,
       name: "A",
       x: 200,
       y: 150
     }, {
+      id : 1,
       name: "B",
       x: 140,
       y: 300
     }, {
+      id : 2,
       name: "C",
       x: 300,
       y: 300
     }, {
+      id : 3,
       name: "D",
       x: 300,
       y: 180
@@ -28,22 +32,21 @@ var data = {
     }, ]
   };
  
-  var c10 = d3.scale.category10();
   var svg = d3.select("body")
     .append("svg")
     .attr("width", 1200)
     .attr("height", 800);
  
-  var drag = d3.behavior.drag()
-    .on("drag", function(d, i) {
-      d.x += d3.event.dx
-      d.y += d3.event.dy
-      d3.select(this).attr("cx", d.x).attr("cy", d.y);
-      links.each(function(l, li) {
-        if (l.source == i) {
-          d3.select(this).attr("x1", d.x).attr("y1", d.y);
-        } else if (l.target == i) {
-          d3.select(this).attr("x2", d.x).attr("y2", d.y);
+  var drag = d3.drag()
+    .on("drag", function(event, object) {
+      object.x += event.dx
+      object.y += event.dy
+      d3.select(this).attr("cx", event.x).attr("cy", event.y);
+      links.each(function(link) {
+        if (link.source == object.id) {
+          d3.select(this).attr("x1", event.x).attr("y1", event.y);
+        } else if (link.target == object.id) {
+          d3.select(this).attr("x2", event.x).attr("y2", event.y);
         }
       });
     });
@@ -82,7 +85,4 @@ var data = {
       return d.y
     })
     .attr("r", 15)
-    .attr("fill", function(d, i) {
-      return c10(i);
-    })
     .call(drag);
